@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>AI Chatbot</title>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body{
+            background:#0f172a;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+        }
+
+        .chat-container{
+            width:400px;
+            height:600px;
+            background:white;
+            border-radius:15px;
+            overflow:hidden;
+            display:flex;
+            flex-direction:column;
+            box-shadow:0 0 20px rgba(0,0,0,0.3);
+        }
+
+        .chat-header{
+            background:#2563eb;
+            color:white;
+            padding:15px;
+            text-align:center;
+            font-size:22px;
+            font-weight:bold;
+        }
+
+        .chat-box{
+            flex:1;
+            padding:15px;
+            overflow-y:auto;
+            background:#f1f5f9;
+        }
+
+        .message{
+            margin-bottom:15px;
+            padding:10px 14px;
+            border-radius:10px;
+            max-width:80%;
+            word-wrap:break-word;
+        }
+
+        .user{
+            background:#2563eb;
+            color:white;
+            margin-left:auto;
+        }
+
+        .bot{
+            background:white;
+            color:black;
+            border:1px solid #ddd;
+        }
+
+        .chat-input{
+            display:flex;
+            padding:10px;
+            background:white;
+            border-top:1px solid #ddd;
+        }
+
+        .chat-input input{
+            flex:1;
+            padding:12px;
+            border:1px solid #ccc;
+            border-radius:8px;
+            outline:none;
+            font-size:16px;
+        }
+
+        .chat-input button{
+            margin-left:10px;
+            padding:12px 18px;
+            border:none;
+            background:#2563eb;
+            color:white;
+            border-radius:8px;
+            cursor:pointer;
+            font-size:16px;
+        }
+
+        .chat-input button:hover{
+            background:#1d4ed8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+
+        <div class="chat-header">
+            AI Chatbot
+        </div>
+
+        <div class="chat-box" id="chatBox">
+        </div>
+
+        <div class="chat-input">
+            <input 
+                type="text" 
+                id="userInput" 
+                placeholder="Type your message..."
+            />
+
+            <button onclick="sendMessage()">
+                Send
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+
+        const chatBox = document.getElementById("chatBox");
+
+        // Function to add messages in chat UI
+        function addMessage(message, sender){
+
+            const messageDiv = document.createElement("div");
+
+            messageDiv.classList.add("message");
+            messageDiv.classList.add(sender);
+
+            messageDiv.innerText = message;
+
+            chatBox.appendChild(messageDiv);
+
+            // Auto scroll to latest message
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Function to send message to backend
+        async function sendMessage(){
+
+            const userInput = document.getElementById("userInput");
+
+            const message = userInput.value.trim();
+
+            if(message === ""){
+                return;
+            }
+
+            // Show user message
+            addMessage(message, "user");
+
+            // Clear input field
+            userInput.value = "";
+
+            // Show loading text
+            addMessage("AI is typing...", "bot");
+
+            try{
+
+                // Send message to backend
+                const response = await fetch("http://127.0.0.1:8000/chat", {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        message: message
+                    })
+                });
+
+                const data = await response.json();
+
+                // Remove loading message
+                chatBox.removeChild(chatBox.lastChild);
+
+                // Show AI response
+                addMessage(data.reply, "bot");
+
+            }
+            catch(error){
+
+                // Remove loading message
+                chatBox.removeChild(chatBox.lastChild);
+
+                addMessage("Error connecting to server", "bot");
+
+                console.log(error);
+            }
+        }
+
+        // Send message when Enter key is pressed
+        document.getElementById("userInput")
+        .addEventListener("keypress", function(event){
+
+            if(event.key === "Enter"){
+                sendMessage();
+            }
+        });
+
+    </script>
+
+</body>
+</html>
